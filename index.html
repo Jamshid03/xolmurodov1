@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xolmurodov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   TOKENS
+   base   : #0a0a0c   (near-black, cinematic)
+   ivory  : #ece7da   (warm text)
+   fade   : #8f8b81   (muted secondary text)
+   signal : #ff6a3d   (single accent — reel/tally color)
+   glass  : rgba(255,255,255,.06)
+   ========================================================= */
+
+:root{
+  --base: #0a0a0c;
+  --ivory: #ece7da;
+  --fade: #8f8b81;
+  --signal: #ff6a3d;
+  --glass-bg: rgba(20,19,17,.35);
+  --glass-border: rgba(236,231,218,.14);
+  --display: 'Syne', sans-serif;
+  --body: 'Inter', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*{ box-sizing: border-box; margin:0; padding:0; }
+
+html{ scroll-behavior: smooth; }
+
+body{
+  background: var(--base);
+  color: var(--ivory);
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::selection{ background: var(--signal); color: var(--base); }
+
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+  *{ animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* ================= VIDEO BACKGROUND ================= */
+
+.bg-stage{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  background: var(--base);
+}
+
+.bg-video{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.3s ease;
+  will-change: opacity;
+}
+.bg-video.active{ opacity: 1; }
+
+.bg-overlay{
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10,10,12,.55) 0%, rgba(10,10,12,.35) 35%, rgba(10,10,12,.65) 100%);
+  pointer-events: none;
+}
+
+.bg-grain{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#particles{
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ================= REEL NAV (top-center dots) ================= */
+
+.reel-nav{
+  position: fixed;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 10px 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.reel-dot{
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.4px solid rgba(236,231,218,.45);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color .3s ease, transform .3s ease;
+}
+.reel-dot:hover{ transform: scale(1.2); }
+.reel-dot::after{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.4px solid transparent;
+  transition: border-color .3s ease, transform .5s ease;
+}
+.reel-dot.is-active{
+  border-color: var(--signal);
+  background: var(--signal);
+}
+.reel-dot.is-active::after{
+  border-color: var(--signal);
+  animation: reel-spin 6s linear infinite;
+}
+.reel-dot.is-active::before{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255,106,61,.4);
+}
+
+@keyframes reel-spin{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}
+
+/* ================= SOUND TOGGLE ================= */
+
+.sound-toggle{
+  position: fixed;
+  top: 28px;
+  right: 28px;
+  z-index: 20;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sound-bars{ display:flex; align-items:flex-end; gap:3px; height: 16px; }
+.sound-bars i{
+  display:block; width:3px; background: var(--ivory);
+  border-radius: 2px; animation: bar 1s ease-in-out infinite;
+}
+.sound-bars i:nth-child(1){ height: 40%; animation-delay: 0s; }
+.sound-bars i:nth-child(2){ height: 100%; animation-delay: .15s; }
+.sound-bars i:nth-child(3){ height: 65%; animation-delay: .3s; }
+.sound-toggle.is-muted .sound-bars i{ animation-play-state: paused; height: 20% !important; opacity: .4; }
+@keyframes bar{
+  0%,100%{ transform: scaleY(.5); }
+  50%{ transform: scaleY(1); }
+}
+
+.volume-controls{
+  position: fixed;
+  top: 28px;
+  right: 84px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.volume-btn{
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--ivory);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .25s ease, color .25s ease;
+}
+.volume-btn:hover{ background: rgba(255,106,61,.18); color: var(--signal); }
+
+@media (max-width: 640px){
+  .volume-controls{ right: 78px; top: 20px; }
+  .sound-toggle{ top: 20px; right: 20px; }
+}
+
+/* ================= HERO ================= */
+
+.hero{
+  position: relative;
+  z-index: 5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8vw;
+}
+
+.eyebrow{
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .08em;
+  color: var(--signal);
+  margin-bottom: 22px;
+  text-transform: lowercase;
+}
+
+.hero-title{
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.1rem, 6vw, 4.6rem);
+  line-height: .95;
+  letter-spacing: -.02em;
+  text-transform: uppercase;
+}
+.hero-title span{
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--ivory);
+}
+
+.hero-sub{
+  margin-top: 26px;
+  max-width: 460px;
+  font-size: 17px;
+  color: var(--fade);
+  font-weight: 400;
+}
+
+.scroll-cue{
+  position: absolute;
+  bottom: 48px;
+  left: 8vw;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fade);
+  letter-spacing: .05em;
+}
+.scroll-cue span{
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(180deg, var(--signal), transparent);
+  position: relative;
+  overflow: hidden;
+}
+.scroll-cue span::after{
+  content:"";
+  position:absolute;
+  top:-100%; left:0; width:100%; height:100%;
+  background: var(--ivory);
+  animation: cue-drip 1.8s ease-in-out infinite;
+}
+@keyframes cue-drip{
+  0%{ top: -100%; }
+  60%{ top: 100%; }
+  100%{ top: 100%; }
+}
+
+/* ================= CONTENT PANELS ================= */
+
+.content{
+  position: relative;
+  z-index: 5;
+}
+
+.panel{
+  min-height: 100vh;
+  padding: 14vh 8vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 900px;
+}
+
+.panel-index{
+  font-family: var(--mono);
+  color: var(--signal);
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: block;
+}
+
+.panel h2{
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  text-transform: uppercase;
+  letter-spacing: -.01em;
+  margin-bottom: 22px;
+}
+
+.panel p{
+  color: var(--fade);
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+.work-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.work-card{
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 26px;
+  padding: 32px 26px;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  transition: background .3s ease, border-color .3s ease, transform .3s ease;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  position: relative;
+}
+.work-card:hover{
+  background: rgba(255,106,61,.10);
+  border-color: rgba(255,106,61,.35);
+  transform: translateY(-3px);
+}
+.work-num{ font-family: var(--mono); color: var(--signal); font-size: 12px; }
+.work-card h3{
+  font-family: var(--display);
+  font-size: 20px;
+  margin: 14px 0 8px;
+  text-transform: uppercase;
+}
+.work-card p{ font-size: 14px; color: var(--fade); }
+.work-arrow{
+  position: absolute;
+  top: 28px;
+  right: 22px;
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--signal);
+  opacity: 0;
+  transform: translate(-4px, 4px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.work-card:hover .work-arrow{ opacity: 1; transform: translate(0,0); }
+
+/* ================= CONTACT FORM ================= */
+
+.contact-form{
+  margin-top: 30px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px;
+  border-radius: 20px;
+  background: rgba(20,19,17,.32);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.contact-field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.contact-field label{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--fade);
+  text-transform: uppercase;
+}
+.contact-field input,
+.contact-field textarea{
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--ivory);
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color .25s ease, background .25s ease;
+  resize: vertical;
+}
+.contact-field input:focus,
+.contact-field textarea:focus{
+  border-color: var(--signal);
+  background: rgba(255,255,255,.06);
+}
+.contact-field textarea{ min-height: 100px; font-family: var(--body); }
+
+.contact-submit{
+  margin-top: 4px;
+  align-self: flex-start;
+  padding: 12px 26px;
+  border-radius: 999px;
+  border: 1px solid var(--signal);
+  background: var(--signal);
+  color: var(--base);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  cursor: pointer;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.contact-submit:hover{ opacity: .88; transform: translateY(-1px); }
+.contact-submit:disabled{ opacity: .5; cursor: default; transform: none; }
+
+.contact-status{
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 16px;
+}
+.contact-status.ok{ color: #5fd68a; }
+.contact-status.err{ color: #ff6a6a; }
+
+.contact-anon{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--fade);
+}
+.contact-anon input{
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background .25s ease, border-color .25s ease;
+}
+.contact-anon input:checked{
+  background: var(--signal);
+  border-color: var(--signal);
+}
+.contact-anon input:checked::after{
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--base);
+}
+
+/* ================= SOCIAL GLASS BOX ================= */
+
+.social-box{
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  width: 260px;
+  border-radius: 22px;
+  background: rgba(20,19,17,.28);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.social-item{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--ivory);
+  background: rgba(255,255,255,.03);
+  border: 1px solid transparent;
+  transition: background .3s ease, border-color .3s ease, transform .3s ease;
+}
+.social-item:hover{
+  background: rgba(255,106,61,.10);
+  border-color: rgba(255,106,61,.35);
+  transform: translateX(4px);
+}
+
+.social-icon{
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.05);
+}
+.social-icon svg{ width: 22px; height: 22px; color: var(--ivory); }
+.social-item:hover .social-icon{ color: var(--signal); }
+.social-item:hover .social-icon svg{ color: var(--signal); }
+
+.social-text{ display: flex; flex-direction: column; gap: 2px; }
+.social-label{ font-family: var(--display); font-size: 15px; text-transform: uppercase; letter-spacing: .02em; }
+.social-handle{ font-family: var(--mono); font-size: 12px; color: var(--fade); }
+
+@media (max-width: 640px){
+  .social-box{
+    left: auto;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 999px;
+  }
+  .social-text{ display: none; }
+  .social-item{
+    flex: none;
+    justify-content: center;
+    padding: 9px;
+    gap: 0;
+  }
+  .social-icon{ width: 32px; height: 32px; }
+  .social-icon svg{ width: 16px; height: 16px; }
+  .hero{ padding: 0 6vw; }
+  .panel{ padding: 10vh 6vw; }
+}
+
+/* ================= SPEED BADGE (internet tezligi) ================= */
+
+.speed-badge{
+  position: fixed;
+  left: 28px;
+  bottom: 28px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 170px;
+  padding: 9px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fade);
+  white-space: nowrap;
+}
+.speed-dot{
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5fd68a;
+  flex-shrink: 0;
+  animation: speed-pulse 1.6s ease-in-out infinite;
+}
+#speedText{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0; /* flex item'lar default'da matn kengligidan qisqarmaydi — shuning
+                   uchun bu bo'lmasa ellipsis ishlamay, badge cho'zilib ketaveradi */
+}
+@keyframes speed-pulse{
+  0%,100%{ opacity: .5; transform: scale(.85); }
+  50%{ opacity: 1; transform: scale(1.1); }
+}
+
+/* Mobil'da badge — bu qoida asosiy .speed-badge'dan KEYIN kelishi shart,
+   aks holda cascade tartibi bo'yicha yuqoridagi qoida uni bosib ketadi. */
+@media (max-width: 640px){
+  .speed-badge{
+    top: 20px;
+    left: 20px;
+    bottom: auto;
+    max-width: 120px;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ================= INTERNET TEZLIGI ================= -->
+<div class="speed-badge" id="speedBadge">
+  <span class="speed-dot"></span>
+  <span id="speedText">…</span>
+</div>
+
+<!-- ================= VIDEO BACKGROUND (fixed, crossfading) ================= -->
+<div class="bg-stage">
+  <video class="bg-video active" id="videoA" muted playsinline loop autoplay preload="auto"></video>
+  <video class="bg-video" id="videoB" muted playsinline loop autoplay preload="auto"></video>
+  <div class="bg-overlay"></div>
+  <div class="bg-grain"></div>
+</div>
+
+<!-- hidden audio layers for crossfade -->
+<audio id="audioA" loop preload="auto"></audio>
+<audio id="audioB" loop preload="auto"></audio>
+
+<!-- ================= THREE.JS PARTICLE OVERLAY ================= -->
+<canvas id="particles"></canvas>
+
+<!-- ================= TOP CENTER REEL NAVIGATION (dots) ================= -->
+<nav class="reel-nav" id="reelNav" aria-label="Fon tanlash">
+  <!-- dots injected by script.js based on CONFIG -->
+</nav>
+
+<!-- ================= VOLUME CONTROLS ================= -->
+<div class="volume-controls">
+  <button class="volume-btn" id="volDown" aria-label="Ovozni pasaytirish">－</button>
+  <button class="volume-btn" id="volUp" aria-label="Ovozni ko'tarish">＋</button>
+</div>
+
+<!-- ================= SOUND TOGGLE ================= -->
+<button class="sound-toggle" id="soundToggle" aria-label="Ovozni yoqish/o'chirish">
+  <span class="sound-bars"><i></i><i></i><i></i></span>
+</button>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <p class="eyebrow">// scene <span id="sceneIndex">01</span> — <span id="sceneLabel">intro</span></p>
+  <h1 class="hero-title">Jamshid<br><span>Xolmurodov</span></h1>
+  <p class="hero-sub">3D motion &amp; visual craft. t.</p>
+  <div class="scroll-cue"><span></span> Scroll</div>
+</header>
+
+<!-- ================= CONTENT (scrolls over fixed video) ================= -->
+<main class="content">
+
+  <section class="panel" id="about">
+    <span class="panel-index">01</span>
+    <h2>Men haqimda</h2>
+    <p>Digital Economist, .......</p>
+  </section>
+
+  <section class="panel" id="work">
+    <span class="panel-index">02</span>
+    <h2>Our Group</h2>
+    <div class="work-grid">
+      <a class="work-card" href="https://t.me/the_Avloniy00" target="_blank" rel="noopener"><span class="work-num">01</span><h3>Grafik Dizayner</h3><p>Hasan Javqachtiyev,1.5 yillik tajribaga ega grafik dizayner, promt enginer</p><span class="work-arrow">↗</span></a>
+      <a class="work-card" href="https://t.me/wtfvvezy" target="_blank" rel="noopener"><span class="work-num">02</span><h3>Manager</h3><p>Jamshid Xolmurodov, Cyber University talabasi, Economist</p><span class="work-arrow">↗</span></a>
+      <a class="work-card" href="#" target="_blank" rel="noopener"><span class="work-num">03</span><h3>Other site</h3><p>.......</p><span class="work-arrow">↗</span></a>
+      <a class="work-card" href="#" target="_blank" rel="noopener"><span class="work-num">04</span><h3>Other Project</h3><p>.......</p><span class="work-arrow">↗</span></a>
+    </div>
+  </section>
+
+  <section class="panel" id="contact">
+    <span class="panel-index">03</span>
+    <h2>Aloqa</h2>
+    <p>Loyiha bo'yicha yozing — quyidagi ijtimoiy tarmoqlar orqali ham topishingiz mumkin.</p>
+
+    <form class="contact-form" id="contactForm">
+      <label class="contact-anon">
+        <input type="checkbox" id="cf-anon" name="anon">
+        Anonim yozish
+      </label>
+      <div class="contact-field" id="cf-name-field">
+        <label for="cf-name">Ismingiz</label>
+        <input type="text" id="cf-name" name="name" placeholder="Ismingiz" required>
+      </div>
+      <div class="contact-field" id="cf-contact-field">
+        <label for="cf-contact">Aloqa (telegram / telefon)</label>
+        <input type="text" id="cf-contact" name="contact" placeholder="@username yoki telefon raqam" required>
+      </div>
+      <div class="contact-field">
+        <label for="cf-message">Xabar</label>
+        <textarea id="cf-message" name="message" placeholder="Nima haqida yozmoqchisiz?" required></textarea>
+      </div>
+      <button type="submit" class="contact-submit" id="cfSubmit">Yuborish</button>
+      <p class="contact-status" id="cfStatus"></p>
+    </form>
+  </section>
+
+</main>
+
+<!-- ================= SOCIAL GLASS BOX ================= -->
+<aside class="social-box" aria-label="Ijtimoiy tarmoqlar">
+  <a href="https://instagram.com/cacaf_in" target="_blank" rel="noopener" class="social-item social-instagram">
+    <span class="social-icon">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.6"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor"/></svg>
+    </span>
+    <span class="social-text">
+      <span class="social-label">Instagram</span>
+      <span class="social-handle">@cacaf_in</span>
+    </span>
+  </a>
+  <a href="https://t.me/wtfvvezy" target="_blank" rel="noopener" class="social-item social-telegram">
+    <span class="social-icon">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 4.5L2.7 11.6c-1.1.44-1.1 1.07-.2 1.35l4.68 1.46 1.8 5.55c.22.6.38.84.78.84.31 0 .45-.14.63-.32l1.72-1.65 3.6 2.65c.66.36 1.14.18 1.3-.61l2.36-11.1c.24-1.03-.37-1.5-1.4-1.27z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="social-text">
+      <span class="social-label">Telegram</span>
+      <span class="social-handle">@wtfvvezy</span>
+    </span>
+  </a>
+</aside>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+
+/* =========================================================
+   1) CONFIG — shu yerga xohlagancha video + musiqa qo'shing
+   -----------------------------------------------------------
+   video : "assets/videos/..."  (fayl nomini o'zgartiring)
+   music : "assets/music/..."   (fayl nomini o'zgartiring)
+   label : nuqta ustiga sichqoncha kelganda / eyebrow'da chiqadigan nom
+   ========================================================= */
+const CONFIG = [
+  { video: "assets/videos/2190480.mp4", music: "assets/music/M83_Solitude_Felsmann_+_Tiley_Reinterpretation_Official_Aud.mp3", label: "motion" },
+
+  // Diqqat: "2b-in-the-field-of-blue-lilies..." video fayli GitHub repo'da topilmadi,
+  // shuning uchun vaqtincha olib tashlandi. Faylni yuklab, keyin qayta qo'shing:
+  // { video: "assets/videos/2b-in-the-field-of-blue-lilies-nier-automata-moewalls-com.mp4", music: "assets/music/audio.mp3", label: "intro" },
+
+  // Yana qo'shish uchun shu formatda qator qo'shavering:
+  // { video: "assets/videos/scene-04.mp4", music: "assets/music/scene-04.mp3", label: "closing" },
+];
+
+const CROSSFADE_MS = 1300;
+
+/* =========================================================
+   0) INTERNET TEZLIGI (speed badge)
+   -----------------------------------------------------------
+   Brauzerning Network Information API'siga tayanadi (Chrome,
+   Edge, Android brauzerlarida mavjud). Bu video/audio yuklash
+   jarayoniga umuman bog'liq emas — shuning uchun musiqa/video
+   ishga tushishiga hech qanday ta'sir qilmaydi. Safari/Firefox'da
+   bu API yo'q, shu holatda "aniqlanmadi" deb ko'rsatiladi.
+   ========================================================= */
+const speedTextEl = document.getElementById("speedText");
+
+function formatSpeed(mbps){
+  if (!isFinite(mbps) || mbps <= 0) return "noma'lum";
+  return mbps >= 10 ? `~${mbps.toFixed(0)} Mbit/s` : `~${mbps.toFixed(1)} Mbit/s`;
+}
+
+function updateSpeedBadge(){
+  if (!speedTextEl) return;
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (conn && typeof conn.downlink === "number") {
+    speedTextEl.textContent = formatSpeed(conn.downlink);
+  } else {
+    speedTextEl.textContent = "aniqlanmadi";
+  }
+}
+updateSpeedBadge();
+const _conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+_conn?.addEventListener?.("change", updateSpeedBadge);
+
+/* =========================================================
+   1b) TELEGRAM CONTACT FORM
+   -----------------------------------------------------------
+   1. Telegram'da @BotFather'ga yozing, /newbot buyrug'i bilan
+      bot yarating — sizga BOT_TOKEN beradi (masalan
+      "123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx").
+   2. O'sha botga Telegram'dan /start yozing (botni ishga tushirish
+      uchun shart — aks holda u sizga xabar yubora olmaydi).
+   3. Brauzerda oching: https://api.telegram.org/bot<BOT_TOKEN>/getUpdates
+      — javobdagi "chat":{"id": ...} qiymati sizning CHAT_ID'ingiz.
+   4. Ikkalasini pastga yozing.
+
+   OGOHLANTIRISH: bu token sahifa manbasida (view-source) ko'rinadi,
+   ya'ni nazariy jihatdan boshqa birov uni topib botga spam xabar
+   yubortirishi mumkin. Shaxsiy/kichik loyiha uchun odatda muammo
+   emas, lekin xohlasangiz keyinroq buni backend orqali yashirish
+   mumkin.
+   ========================================================= */
+const TELEGRAM_BOT_TOKEN = "8972702326:AAGZBL4IYqNxVZwZk56pOgVkNb94q_8uv7k";
+const TELEGRAM_CHAT_ID = "1791214056";
+
+const contactForm = document.getElementById("contactForm");
+const cfSubmit = document.getElementById("cfSubmit");
+const cfStatus = document.getElementById("cfStatus");
+const cfAnon = document.getElementById("cf-anon");
+const cfNameField = document.getElementById("cf-name-field");
+const cfContactField = document.getElementById("cf-contact-field");
+const cfNameInput = document.getElementById("cf-name");
+const cfContactInput = document.getElementById("cf-contact");
+
+if (cfAnon) {
+  cfAnon.addEventListener("change", () => {
+    const anon = cfAnon.checked;
+    cfNameField.style.display = anon ? "none" : "flex";
+    cfContactField.style.display = anon ? "none" : "flex";
+    cfNameInput.required = !anon;
+    cfContactInput.required = !anon;
+  });
+}
+
+if (contactForm) {
+  contactForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (TELEGRAM_BOT_TOKEN === "YOUR_BOT_TOKEN_HERE" || TELEGRAM_CHAT_ID === "YOUR_CHAT_ID_HERE") {
+      cfStatus.textContent = "Bot hali sozlanmagan — script.js ichida TELEGRAM_BOT_TOKEN va TELEGRAM_CHAT_ID'ni to'ldiring.";
+      cfStatus.className = "contact-status err";
+      return;
+    }
+
+    const isAnon = cfAnon.checked;
+    const name = isAnon ? "Anonim" : cfNameInput.value.trim();
+    const contact = isAnon ? "—" : cfContactInput.value.trim();
+    const message = document.getElementById("cf-message").value.trim();
+
+    const text = isAnon
+      ? `📩 Yangi anonim xabar (sayt)\nXabar: ${message}`
+      : `📩 Yangi xabar (sayt)\nIsm: ${name}\nAloqa: ${contact}\nXabar: ${message}`;
+
+    cfSubmit.disabled = true;
+    cfSubmit.textContent = "Yuborilmoqda...";
+    cfStatus.textContent = "";
+    cfStatus.className = "contact-status";
+
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        cfStatus.textContent = "Xabaringiz yuborildi, rahmat!";
+        cfStatus.className = "contact-status ok";
+        contactForm.reset();
+        cfNameField.style.display = "flex";
+        cfContactField.style.display = "flex";
+        cfNameInput.required = true;
+        cfContactInput.required = true;
+      } else {
+        throw new Error(data.description || "Noma'lum xatolik");
+      }
+    } catch (err) {
+      cfStatus.textContent = "Xabar yuborilmadi. Birozdan so'ng qayta urinib ko'ring.";
+      cfStatus.className = "contact-status err";
+    } finally {
+      cfSubmit.disabled = false;
+      cfSubmit.textContent = "Yuborish";
+    }
+  });
+}
+
+/* =========================================================
+   2) VIDEO + AUDIO CROSSFADE
+   ========================================================= */
+const videoEls = [document.getElementById("videoA"), document.getElementById("videoB")];
+const audioEls = [document.getElementById("audioA"), document.getElementById("audioB")];
+
+let activeLayer = 0;   // 0 = videoA/audioA is currently showing
+let currentIndex = 0;  // index into CONFIG
+let isMuted = false;
+let masterVolume = 0.3;  // sayt ochilganda past boshlanadi — user + tugmasi bilan ko'taradi
+let userInteracted = false;
+
+const sceneIndexEl = document.getElementById("sceneIndex");
+const sceneLabelEl = document.getElementById("sceneLabel");
+const reelNav = document.getElementById("reelNav");
+const soundToggle = document.getElementById("soundToggle");
+const volDownBtn = document.getElementById("volDown");
+const volUpBtn = document.getElementById("volUp");
+
+function targetVolume(){
+  return isMuted ? 0 : masterVolume;
+}
+
+function buildDots(){
+  reelNav.innerHTML = "";
+  CONFIG.forEach((scene, i) => {
+    const dot = document.createElement("button");
+    dot.className = "reel-dot" + (i === 0 ? " is-active" : "");
+    dot.setAttribute("aria-label", scene.label);
+    dot.title = scene.label;
+    dot.addEventListener("click", () => goToScene(i));
+    reelNav.appendChild(dot);
+  });
+}
+
+function updateDots(index){
+  [...reelNav.children].forEach((dot, i) => {
+    dot.classList.toggle("is-active", i === index);
+  });
+}
+
+videoEls.forEach((v) => {
+  v.addEventListener("error", () => {
+    console.warn("Video yuklanmadi, yo'lni tekshiring:", v.currentSrc);
+  });
+});
+
+function loadInitialScene(){
+  const scene = CONFIG[0];
+  videoEls[0].src = scene.video;
+  videoEls[0].classList.add("active");
+  videoEls[0].play().catch(() => {
+    // Avtoplay to'silgan bo'lishi mumkin — bindFirstInteraction birinchi
+    // bosish/scroll'da qayta urinib ko'radi.
+  });
+
+  audioEls[0].src = scene.music;
+  audioEls[0].volume = 0;
+  // Autoplay with sound is usually blocked until user interacts;
+  // we try muted-less first, fall back to waiting for interaction.
+  audioEls[0].play().then(() => {
+    fadeAudio(audioEls[0], 0, targetVolume(), CROSSFADE_MS);
+  }).catch(() => {
+    // will start on first user click/scroll (see bindFirstInteraction)
+  });
+
+  sceneIndexEl.textContent = String(1).padStart(2, "0");
+  sceneLabelEl.textContent = scene.label;
+}
+
+function fadeAudio(el, from, to, duration){
+  const start = performance.now();
+  function tick(now){
+    const t = Math.min(1, (now - start) / duration);
+    el.volume = from + (to - from) * t;
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function goToScene(index){
+  if (index === currentIndex) return;
+  currentIndex = index;
+  const scene = CONFIG[index];
+
+  const nextLayer = 1 - activeLayer;
+  const outVideo = videoEls[activeLayer];
+  const inVideo = videoEls[nextLayer];
+  const outAudio = audioEls[activeLayer];
+  const inAudio = audioEls[nextLayer];
+
+  inVideo.src = scene.video;
+  inVideo.currentTime = 0;
+  inVideo.play().catch(() => {});
+  inVideo.classList.add("active");
+  outVideo.classList.remove("active");
+
+  inAudio.src = scene.music;
+  inAudio.volume = 0;
+  inAudio.currentTime = 0;
+  inAudio.play().catch(() => {});
+  fadeAudio(inAudio, 0, targetVolume(), CROSSFADE_MS);
+  fadeAudio(outAudio, outAudio.volume, 0, CROSSFADE_MS);
+  setTimeout(() => { outAudio.pause(); outVideo.pause(); }, CROSSFADE_MS + 100);
+
+  activeLayer = nextLayer;
+  updateDots(index);
+  sceneIndexEl.textContent = String(index + 1).padStart(2, "0");
+  sceneLabelEl.textContent = scene.label;
+}
+
+soundToggle.addEventListener("click", () => {
+  isMuted = !isMuted;
+  soundToggle.classList.toggle("is-muted", isMuted);
+  const active = audioEls[activeLayer];
+  fadeAudio(active, active.volume, targetVolume(), 400);
+});
+
+// Pasaytirish / ko'tarish tugmalari — joriy audio balandligini boshqaradi
+volDownBtn.addEventListener("click", () => {
+  masterVolume = Math.max(0, +(masterVolume - 0.15).toFixed(2));
+  if (masterVolume === 0) { isMuted = true; soundToggle.classList.add("is-muted"); }
+  const active = audioEls[activeLayer];
+  fadeAudio(active, active.volume, targetVolume(), 250);
+});
+
+volUpBtn.addEventListener("click", () => {
+  masterVolume = Math.min(1, +(masterVolume + 0.15).toFixed(2));
+  if (masterVolume > 0 && isMuted) { isMuted = false; soundToggle.classList.remove("is-muted"); }
+  const active = audioEls[activeLayer];
+  fadeAudio(active, active.volume, targetVolume(), 250);
+});
+
+// Ba'zi brauzerlar user harakati bo'lmaguncha audio autoplay'ni butunlay bloklaydi.
+// Shuning uchun bir martalik urinish bilan cheklanmaymiz — musiqa haqiqatan
+// ishga tushguncha har bir bosish/scroll/teginishda qayta urinib ko'ramiz.
+function bindFirstInteraction(){
+  function tryStart(){
+    const active = audioEls[activeLayer];
+    if (active.paused) {
+      active.play().then(() => {
+        fadeAudio(active, 0, targetVolume(), CROSSFADE_MS);
+      }).catch(() => {});
+    }
+    const activeVideo = videoEls[activeLayer];
+    if (activeVideo.paused) { activeVideo.play().catch(() => {}); }
+
+    if (!active.paused) cleanup();
+  }
+  function cleanup(){
+    window.removeEventListener("click", tryStart);
+    window.removeEventListener("touchstart", tryStart);
+    window.removeEventListener("pointerdown", tryStart);
+    window.removeEventListener("scroll", tryStart);
+    window.removeEventListener("keydown", tryStart);
+  }
+  window.addEventListener("click", tryStart);
+  window.addEventListener("touchstart", tryStart, { passive: true });
+  window.addEventListener("pointerdown", tryStart);
+  window.addEventListener("scroll", tryStart, { passive: true });
+  window.addEventListener("keydown", tryStart);
+}
+
+buildDots();
+loadInitialScene();
+bindFirstInteraction();
+
+/* =========================================================
+   3) THREE.JS — ambient particle field (subtle "3D" layer)
+   ========================================================= */
+const canvas = document.getElementById("particles");
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const scene3d = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.z = 12;
+
+const PARTICLE_COUNT = 260;
+const positions = new Float32Array(PARTICLE_COUNT * 3);
+for (let i = 0; i < PARTICLE_COUNT; i++){
+  positions[i * 3]     = (Math.random() - 0.5) * 26;
+  positions[i * 3 + 1] = (Math.random() - 0.5) * 16;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 14;
+}
+const geometry = new THREE.BufferGeometry();
+geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+const material = new THREE.PointsMaterial({
+  color: 0xff6a3d,
+  size: 0.045,
+  transparent: true,
+  opacity: 0.55,
+  depthWrite: false,
+});
+const points = new THREE.Points(geometry, material);
+scene3d.add(points);
+
+let mouseX = 0, mouseY = 0;
+window.addEventListener("mousemove", (e) => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+function animate(){
+  points.rotation.y += 0.0007;
+  points.rotation.x += 0.0002;
+  camera.position.x += (mouseX * 0.8 - camera.position.x) * 0.02;
+  camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.02;
+  camera.lookAt(scene3d.position);
+  renderer.render(scene3d, camera);
+  requestAnimationFrame(animate);
+}
+animate();
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+</script>
+
+</body>
+</html>
