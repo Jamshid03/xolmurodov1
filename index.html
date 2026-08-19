@@ -506,6 +506,184 @@ body{
   color: var(--base);
 }
 
+/* ================= BLOG ================= */
+
+.blog-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+  width: 100%;
+}
+
+.blog-card{
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  overflow: hidden;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  transition: background .3s ease, border-color .3s ease, transform .3s ease;
+  display: flex;
+  flex-direction: column;
+}
+.blog-card:hover{
+  background: rgba(255,106,61,.08);
+  border-color: rgba(255,106,61,.30);
+  transform: translateY(-3px);
+}
+
+.blog-card-img{
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+  background: rgba(255,255,255,.04);
+}
+
+.blog-card-body{
+  padding: 22px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.blog-card-date{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .05em;
+  color: var(--signal);
+  text-transform: uppercase;
+}
+
+.blog-card h3{
+  font-family: var(--display);
+  font-size: 19px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.blog-card-excerpt{
+  font-size: 14px;
+  color: var(--fade);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.blog-more-btn{
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 9px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--signal);
+  background: transparent;
+  color: var(--signal);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease;
+}
+.blog-more-btn:hover{
+  background: var(--signal);
+  color: var(--base);
+}
+
+/* ---- Blog modal (to'liq matn) ---- */
+
+.blog-modal-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10,10,12,.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.blog-modal-overlay.is-open{ display: flex; }
+
+.blog-modal{
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #121114;
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5);
+}
+
+.blog-modal-img{
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  display: block;
+  border-radius: 24px 24px 0 0;
+}
+
+.blog-modal-body{
+  padding: 32px 34px 38px;
+}
+
+.blog-modal-date{
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--signal);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.blog-modal h3{
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  line-height: 1.15;
+}
+
+.blog-modal-text{
+  color: var(--fade);
+  font-size: 15.5px;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.blog-modal-close{
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(10,10,12,.55);
+  color: var(--ivory);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background .25s ease, transform .25s ease;
+}
+.blog-modal-close:hover{ background: var(--signal); color: var(--base); transform: rotate(90deg); }
+
+@media (max-width: 640px){
+  .blog-modal-body{ padding: 24px 22px 28px; }
+  .blog-card-img{ height: 150px; }
+}
+
 /* ================= SOCIAL GLASS BOX ================= */
 
 .social-box{
@@ -697,7 +875,21 @@ body{
     <span class="panel-index">01</span>
     <h2>Men haqimda</h2>
     <p>Digital Economist, .......</p>
+
+    <div class="blog-grid" id="blogGrid"></div>
   </section>
+
+  <div class="blog-modal-overlay" id="blogModalOverlay">
+    <div class="blog-modal" id="blogModal">
+      <button class="blog-modal-close" id="blogModalClose" aria-label="Yopish">✕</button>
+      <img class="blog-modal-img" id="blogModalImg" src="" alt="" style="display:none;">
+      <div class="blog-modal-body">
+        <span class="blog-modal-date" id="blogModalDate"></span>
+        <h3 id="blogModalTitle"></h3>
+        <div class="blog-modal-text" id="blogModalText"></div>
+      </div>
+    </div>
+  </div>
 
   <section class="panel" id="work">
     <span class="panel-index">02</span>
@@ -787,6 +979,97 @@ const CONFIG = [
 ];
 
 const CROSSFADE_MS = 1300;
+
+/* =========================================================
+   1c) BLOG POSTLARI — shu yerga xohlagancha post qo'shing
+   -----------------------------------------------------------
+   date    : sana (matn sifatida, masalan "2025-yil, 12-iyun")
+   title   : sarlavha
+   image   : rasm manzili, masalan "assets/images/post1.jpg"
+             (rasm kerak bo'lmasa shu qatorni olib tashlang yoki "" qilib qoldiring)
+   excerpt : kartochkada ko'rinadigan qisqa matn (2-3 gap yetarli)
+   text    : "Batafsil" bosilganda ochiladigan TO'LIQ matn.
+             Yangi paragraf uchun matn ichida bo'sh qator qoldiring.
+   ========================================================= */
+const BLOG_POSTS = [
+  {
+    date: "2025-yil, iyun",
+    title: "Birinchi post sarlavhasi",
+    image: "",
+    excerpt: "Bu yerga postning qisqacha tavsifi yoziladi — kartochkada shu ko'rinadi, foydalanuvchi \"Batafsil\" tugmasini bossa to'liq matn ochiladi.",
+    text: "Bu yerga postning to'liq matni yoziladi. Xohlagancha uzun bo'lishi mumkin.\n\nYangi paragraf uchun yuqoridagidek bo'sh qator qoldiring — shunda avtomatik alohida abzats bo'lib chiqadi."
+  },
+  {
+    date: "2025-yil, iyul",
+    title: "Ikkinchi post sarlavhasi",
+    image: "",
+    excerpt: "Ikkinchi postning qisqacha tavsifi shu yerda bo'ladi.",
+    text: "Ikkinchi postning to'liq matni shu yerga yoziladi."
+  },
+  {
+    date: "2025-yil, avgust",
+    title: "Uchinchi post sarlavhasi",
+    image: "",
+    excerpt: "Uchinchi postning qisqacha tavsifi.",
+    text: "Uchinchi postning to'liq matni."
+  },
+];
+
+function renderBlogGrid(){
+  const grid = document.getElementById("blogGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  BLOG_POSTS.forEach((post, i) => {
+    const card = document.createElement("div");
+    card.className = "blog-card";
+    card.innerHTML = `
+      ${post.image ? `<img class="blog-card-img" src="${post.image}" alt="${post.title}">` : ""}
+      <div class="blog-card-body">
+        ${post.date ? `<span class="blog-card-date">${post.date}</span>` : ""}
+        <h3>${post.title}</h3>
+        <p class="blog-card-excerpt">${post.excerpt}</p>
+        <button class="blog-more-btn" data-index="${i}">Batafsil</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll(".blog-more-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openBlogModal(parseInt(btn.dataset.index, 10)));
+  });
+}
+
+function openBlogModal(index){
+  const post = BLOG_POSTS[index];
+  if (!post) return;
+  const overlay = document.getElementById("blogModalOverlay");
+  const img = document.getElementById("blogModalImg");
+  document.getElementById("blogModalDate").textContent = post.date || "";
+  document.getElementById("blogModalTitle").textContent = post.title;
+  document.getElementById("blogModalText").textContent = post.text;
+  if (post.image) {
+    img.src = post.image;
+    img.alt = post.title;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+  overlay.classList.add("is-open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeBlogModal(){
+  document.getElementById("blogModalOverlay").classList.remove("is-open");
+  document.body.style.overflow = "";
+}
+
+document.getElementById("blogModalClose")?.addEventListener("click", closeBlogModal);
+document.getElementById("blogModalOverlay")?.addEventListener("click", (e) => {
+  if (e.target.id === "blogModalOverlay") closeBlogModal();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeBlogModal();
+});
+
+renderBlogGrid();
 
 /* =========================================================
    0) INTERNET TEZLIGI (speed badge)
